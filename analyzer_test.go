@@ -63,3 +63,33 @@ func TestCheckEnglishFailure(t *testing.T) {
 		t.Errorf("expected result - %v", expectedResult)
 	}
 }
+
+// Тест checkNoSpecialChars - Успех
+func TestCheckNoSpecialCharsSuccess(t *testing.T) {
+	// preparing
+	msg := "abc_-123 "
+	expectedResult := true
+
+	// test
+	result := checkNoSpecialChars(msg)
+
+	// assert
+	if result != expectedResult {
+		t.Errorf("expected result - %v", expectedResult)
+	}
+}
+
+// Тест checkNoSpecialChars - Провал
+func TestCheckNoSpecialCharsFailure(t *testing.T) {
+	// preparing
+	msg := "@%😶‍🌫️🥶"
+	expectedResult := false
+
+	// test
+	result := checkNoSpecialChars(msg)
+
+	// assert
+	if result != expectedResult {
+		t.Errorf("expected result - %v", expectedResult)
+	}
+}
