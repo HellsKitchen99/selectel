@@ -1,6 +1,7 @@
 package loglint
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -100,27 +101,12 @@ func TestCheckNoSpecialCharsFailure(t *testing.T) {
 // Тест checkSensitive - Успех
 func TestCheckSensitiveSuccess(t *testing.T) {
 	// preparing
-	msg := `package main
-
-		func main() {
-			fmt.Println("Smth")
-		}`
-	expectedResult := true
-	set := token.NewFileSet()
-	node, err := parser.ParseFile(set, "", msg, 0)
+	word := "Smth"
+	exprs, err := checkSensitivePreparing(word)
 	if err != nil {
 		t.Errorf("error while trying to parse go code to ast.File: %v", err)
 	}
-
-	var exprs []ast.Expr
-	ast.Inspect(node, func(n ast.Node) bool {
-		exp, ok := n.(ast.Expr)
-		if !ok {
-			return false
-		}
-		exprs = append(exprs, exp)
-		return true
-	})
+	expectedResult := true
 
 	// test
 	result := checkSensitive(exprs)
@@ -132,10 +118,34 @@ func TestCheckSensitiveSuccess(t *testing.T) {
 }
 
 // Тест checkSensitive - Провал
-func TestCheckSensitiveFailure(t *testing.T) {
+func TestCheckSensitiveFailureBasicLit(t *testing.T) {
 	// preparing
 
 	// test
 
 	// assert
+}
+
+func checkSensitivePreparing(word string) ([]ast.Expr, error) {
+	msg := fmt.Sprintf(`package main
+
+		func main() {
+			fmt.Println("%v")
+		}`, word)
+	set := token.NewFileSet()
+	node, err := parser.ParseFile(set, "", msg, 0)
+	if err != nil {
+		return []ast.Expr{}, err
+	}
+
+	var exprs []ast.Expr
+	ast.Inspect(node, func(n ast.Node) bool {
+		exp, ok := n.(ast.Expr)
+		if !ok {
+			return false
+		}
+		exprs = append(exprs, exp)
+		return true
+	})
+	return exprs, nil
 }
