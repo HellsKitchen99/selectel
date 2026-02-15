@@ -1,6 +1,9 @@
 package loglint
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
 )
 
@@ -92,4 +95,47 @@ func TestCheckNoSpecialCharsFailure(t *testing.T) {
 	if result != expectedResult {
 		t.Errorf("expected result - %v", expectedResult)
 	}
+}
+
+// Тест checkSensitive - Успех
+func TestCheckSensitiveSuccess(t *testing.T) {
+	// preparing
+	msg := `package main
+
+		func main() {
+			fmt.Println("Smth")
+		}`
+	expectedResult := true
+	set := token.NewFileSet()
+	node, err := parser.ParseFile(set, "", msg, 0)
+	if err != nil {
+		t.Errorf("error while trying to parse go code to ast.File: %v", err)
+	}
+
+	var exprs []ast.Expr
+	ast.Inspect(node, func(n ast.Node) bool {
+		exp, ok := n.(ast.Expr)
+		if !ok {
+			return false
+		}
+		exprs = append(exprs, exp)
+		return true
+	})
+
+	// test
+	result := checkSensitive(exprs)
+
+	// assert
+	if result != expectedResult {
+		t.Errorf("expected result - %v", expectedResult)
+	}
+}
+
+// Тест checkSensitive - Провал
+func TestCheckSensitiveFailure(t *testing.T) {
+	// preparing
+
+	// test
+
+	// assert
 }
