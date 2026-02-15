@@ -22,5 +22,18 @@ func run(pass *analysis.Pass) (any, error) {
 }
 
 func ins(n ast.Node, pass *analysis.Pass) bool {
-
+	call, ok := n.(*ast.CallExpr)
+	if !ok {
+		return true
+	}
+	funcName := call.Fun
+	selector, ok := funcName.(*ast.SelectorExpr)
+	if !ok {
+		return true
+	}
+	x, ok := selector.X.(*ast.Ident)
+	if !ok {
+		return true
+	}
+	return true
 }
