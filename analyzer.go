@@ -80,3 +80,28 @@ func ins(n ast.Node, pass *analysis.Pass) bool {
 	// дальнейшая логика
 	return true
 }
+
+// получения содержимого лога
+func extractMessage(call *ast.CallExpr) (string, bool) {
+
+}
+
+// проверка на регистр
+func checkLowerCase(msg string, call *ast.CallExpr, pass *analysis.Pass) bool {
+
+}
+
+// проверка на язык
+func checkEnglish(msg string, call *ast.CallExpr, pass *analysis.Pass) bool {
+
+}
+
+// проверка на спец символы
+func checkNoSpecialChars(msg string, call *ast.CallExpr, pass *analysis.Pass) bool {
+
+}
+
+// проверка на важные данные
+func checkSensitive(msg string, call *ast.CallExpr, pass *analysis.Pass) bool {
+
+}
