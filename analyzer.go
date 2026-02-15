@@ -88,11 +88,17 @@ func ins(n ast.Node, pass *analysis.Pass) bool {
 	}
 	switch needArgs := args.(type) {
 	case string:
-		isLower := checkLowerCase(needArgs, call, pass)
-		isEnglish := checkEnglish(needArgs, call, pass)
-		isNoSpecial := checkNoSpecialChars(needArgs, call, pass)
-		if !isLower || !isEnglish || !isNoSpecial {
-			return true
+		isLower := checkLowerCase(needArgs)
+		if !isLower {
+			pass.Reportf(call.Pos(), "log message must not contain upper case letters")
+		}
+		isEnglish := checkEnglish(needArgs)
+		if !isEnglish {
+			pass.Reportf(call.Pos(), "log message must consist only of English letters")
+		}
+		isNoSpecial := checkNoSpecialChars(needArgs)
+		if !isNoSpecial {
+			pass.Reportf(call.Pos(), "log message must not contain special symbols")
 		}
 	case []ast.Expr:
 		basicLit, ok := needArgs[0].(*ast.BasicLit)
@@ -106,12 +112,21 @@ func ins(n ast.Node, pass *analysis.Pass) bool {
 		if err != nil {
 			return true
 		}
-		isLower := checkLowerCase(basicLitValue, call, pass)
-		isEnglish := checkEnglish(basicLitValue, call, pass)
-		isNoSpecial := checkNoSpecialChars(basicLitValue, call, pass)
-		isSensitive := checkSensitive(needArgs, call, pass)
-		if !isLower || !isEnglish || !isNoSpecial || !isSensitive {
-			return true
+		isLower := checkLowerCase(basicLitValue)
+		if !isLower {
+			pass.Reportf(call.Pos(), "log message must not contain upper case letters")
+		}
+		isEnglish := checkEnglish(basicLitValue)
+		if !isEnglish {
+			pass.Reportf(call.Pos(), "log message must consist only of English letters")
+		}
+		isNoSpecial := checkNoSpecialChars(basicLitValue)
+		if !isNoSpecial {
+			pass.Reportf(call.Pos(), "log message must not contain special symbols")
+		}
+		isSensitive := checkSensitive(needArgs)
+		if !isSensitive {
+			pass.Reportf(call.Pos(), "log message must not contain important data")
 		}
 	default:
 		return true
@@ -148,10 +163,9 @@ func extractMessage(call *ast.CallExpr) (any, bool) {
 }
 
 // проверка на регистр
-func checkLowerCase(msg string, call *ast.CallExpr, pass *analysis.Pass) bool {
+func checkLowerCase(msg string) bool {
 	for _, letter := range msg {
 		if unicode.IsUpper(letter) {
-			pass.Reportf(call.Pos(), "log message must not contain upper case letters")
 			return false
 		}
 	}
@@ -159,7 +173,7 @@ func checkLowerCase(msg string, call *ast.CallExpr, pass *analysis.Pass) bool {
 }
 
 // проверка на язык
-func checkEnglish(msg string, call *ast.CallExpr, pass *analysis.Pass) bool {
+func checkEnglish(msg string) bool {
 	isEnglishLetter := func(letter rune) bool {
 		if letter >= 'a' && letter <= 'z' {
 			return true
@@ -169,7 +183,6 @@ func checkEnglish(msg string, call *ast.CallExpr, pass *analysis.Pass) bool {
 	for _, letter := range msg {
 		if unicode.IsLetter(letter) {
 			if !isEnglishLetter(letter) {
-				pass.Reportf(call.Pos(), "log message must consist only of English letters")
 				return false
 			}
 		}
@@ -178,7 +191,7 @@ func checkEnglish(msg string, call *ast.CallExpr, pass *analysis.Pass) bool {
 }
 
 // проверка на спец символы
-func checkNoSpecialChars(msg string, call *ast.CallExpr, pass *analysis.Pass) bool {
+func checkNoSpecialChars(msg string) bool {
 	isAllowed := func(letter rune) bool {
 		if letter >= 'a' && letter <= 'z' || letter >= '0' && letter <= '9' || letter == ' ' || letter == '_' || letter == '-' {
 			return true
@@ -187,7 +200,6 @@ func checkNoSpecialChars(msg string, call *ast.CallExpr, pass *analysis.Pass) bo
 	}
 	for _, letter := range msg {
 		if !isAllowed(letter) {
-			pass.Reportf(call.Pos(), "log message must not contain special symbols")
 			return false
 		}
 	}
@@ -195,29 +207,26 @@ func checkNoSpecialChars(msg string, call *ast.CallExpr, pass *analysis.Pass) bo
 }
 
 // проверка на важные данные
-func checkSensitive(args []ast.Expr, call *ast.CallExpr, pass *analysis.Pass) bool {
+func checkSensitive(args []ast.Expr) bool {
 	for _, arg := range args {
 		switch needArg := arg.(type) {
 		case *ast.BasicLit:
 			if needArg.Kind != token.STRING {
-				return true
+				continue
 			}
 			needValueUnquoted, err := strconv.Unquote(needArg.Value)
 			if err != nil {
 				continue
 			}
 			if blackList[strings.ToLower(needValueUnquoted)] {
-				pass.Reportf(call.Pos(), "log message must not contain important data")
 				return false
 			}
 		case *ast.Ident:
 			if blackList[strings.ToLower(needArg.Name)] {
-				pass.Reportf(call.Pos(), "log message must not contain important data")
 				return false
 			}
 		case *ast.SelectorExpr:
 			if blackList[strings.ToLower(needArg.Sel.Name)] {
-				pass.Reportf(call.Pos(), "log message must not contain important data")
 				return false
 			}
 		default:
