@@ -6,6 +6,22 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+var allowedMethods = map[string]bool{
+	"Info":    true,
+	"Error":   true,
+	"Warn":    true,
+	"Debug":   true,
+	"Print":   true,
+	"Printf":  true,
+	"Println": true,
+}
+
+var allowedLibs = map[string]bool{
+	"log":  true,
+	"slog": true,
+	"zap":  true,
+}
+
 var Analyzer = &analysis.Analyzer{
 	Name: "loglint",                                         // имя линтера
 	Doc:  "finds invalid args in log funs based on 4 rules", // описание линтера
@@ -36,5 +52,11 @@ func ins(n ast.Node, pass *analysis.Pass) bool {
 		return true
 	}
 	sel := selector.Sel
+	if !allowedLibs[x.Name] {
+		return true
+	}
+	if !allowedMethods[sel.Name] {
+		return true
+	}
 	return true
 }
