@@ -1,0 +1,10 @@
+linters-settings:
+  custom:
+    loglint:
+      path: ./loglint.so
+      description: custom log linter with 4 rules
+      original-url: https://github.com/HellsKitchen99/selectel
+
+linters:
+  enable:
+    - loglint
