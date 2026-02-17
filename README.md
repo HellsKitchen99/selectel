@@ -107,3 +107,14 @@ Makefile         — команды для сборки и тестирован�
  - go/token
  - singlechecker
  - go vet
+
+
+## Использование ИИ
+При выполнении тестового задания использовал LLM-инструменты для уточнения документации по go/analysis и улучшения формулировок README. Архитектура, логика анализатора и реализация правил выполнены самостоятельно.
+
+## Примеры вывода
+```bash
+example/invalid_russian.go:6:2: log message must consist only of English letters
+example/invalid_russian.go:6:2: log message must not contain special symbols
+example/invalid_sensitive.go:15:2: log message must not contain special symbols
+```
